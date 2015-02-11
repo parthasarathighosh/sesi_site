@@ -185,6 +185,9 @@ class Drush(SeleniumBase):
 
         chkbox = self.css("#edit-4-access-user-profiles")
         self.setcheckbox(chkbox, True)
+        
+        chkbox = self.css("#edit-4-bypass-workbench-moderation")
+        self.setcheckbox(chkbox, True)
  
         #disable permissions
         entities=['page','forum','data-access-review','documents','teleconference','blog']
