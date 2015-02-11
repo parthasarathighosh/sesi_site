@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Sesi Vocabulary feature.
+ */
+
+include_once 'sesi_vocabulary.features.inc';

@@ -1,0 +1,112 @@
+<?php
+/**
+ * Used to automagically add a new user to a specific organic Group
+ * OG name = "GLOBAL", content type = "default_community"
+ */
+/**
+ * Implements hook_user_insert().
+ * $edit: The array of form values submitted by the user.
+ * $account: The user object on which the operation is being performed.
+ * $category: The active category of user information being edited.
+ * references:
+ * https://www.drupal.org/node/1098700
+ */
+
+define("DEFAULTGLOBAL", 50); //fallback value
+
+function sesi_addtogroup_user_insert(&$edit, $account, $category) {
+  if ($account->uid) {
+    $groupname = 'GLOBAL';
+    // Drupal User Object: $account
+    // OG Group Node Object: $group
+    $group_nid = _get_group_nid($groupname, 'default_community');
+
+    // check if $group_nid is valid
+    if ($group_nid > 0) {
+
+      // subscribe user to group by og_group()
+      $og_membership = og_group('node', $group_nid, array('entity' => intval($account->uid)));
+
+      // give message
+      // drupal_set_message(t('User ' . $account->name . ' added to group ' . $groupname));
+    }
+  }
+}
+
+function _get_group_nid($groupname, $grouptype) {
+  // grab the GLOBAL OG
+  $query = db_select('node', 'n');
+  $query->fields('n', array('nid'))//SELECT fields from node
+  ->condition('title', $groupname, '=')
+    ->condition('type', $grouptype, '=');
+  $result = $query->execute();
+  $recordcount = $query->countQuery()->execute()->fetchField();
+  //dsm($recordcount);
+  if ($recordcount > 0) {
+    $record = $result->fetchAssoc();
+    return $record['nid'];
+  }
+  else {
+    return 0;
+  }
+}
+
+/**
+ * Prevent users from unsubscribing from the GLOBAL group
+ */
+
+/**
+ * Implements hook_page_alter()
+ * $page: page array
+ * Note: adapted for use of panels
+ */
+function sesi_addtogroup_page_alter(&$page) {
+  // Prevent from unsubscribing from GLOBAL group and hide GLOBAL group from page
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $nid = arg(1);
+    if ($nid) {
+      //drupal_set_message('Node id ' . $nid);
+    }
+    else {
+      $nid = DEFAULTGLOBAL;
+    }
+  }
+  // Hide unsubscribe link from GLOBAL community page
+  $path = current_path();
+  $alias = drupal_get_path_alias($path);
+  if ($alias == 'content/global') {
+
+    // hide 'Unsubscribe from group'
+    // code for panels
+    // difference in page array for admin users and authenticated users
+    if (isset($page ['content']['system_main']['main']['#markup'])) {
+      $htmlblock = $page ['content']['system_main']['main']['#markup']; // html for authenticated user
+      $page ['content']['system_main']['main']['#markup'] = str_replace('Unsubscribe from group', '', $htmlblock);
+    }
+    else {
+      if (isset($page ['content']['system_main']['content']['#markup'])) {
+        $htmlblock = $page ['content']['system_main']['content']['#markup']; // html for admin user
+        $page ['content']['system_main']['content']['#markup'] = str_replace('Unsubscribe from group', '', $htmlblock);
+      }
+    }
+
+    /* code for NOT working with panels
+    $page ['content']['system_main']['nodes'][$nid]['group_group'][0]['#title'] = '';
+    $page ['content']['system_main']['nodes'][$nid]['group_group'][0]['#href'] = '';
+     */
+
+  }
+  // Hide GLOBAL community from user page (e.g. ?q=user/61) 
+  if ((substr($path, 0, 5) == 'user/') && (strpos($path, '/', 6) == 0) && (strcmp($path, 'user/register') != 0)) { // the path OK: ?q=user/61, but notOK: ?q=user/61/shortcuts or ?q=user/61/track/navigation or ?q=user/register
+      if (isset($page ['content']['system_main']['og_user_node'])) {
+      foreach ($page ['content']['system_main']['og_user_node'] as $group) {
+        if (is_numeric($group)) {
+          if ($page ['content']['system_main']['og_user_node'][$group]['#title'] == "GLOBAL") {
+            $page ['content']['system_main']['og_user_node'][$group]['#title'] = '';
+            $page ['content']['system_main']['og_user_node'][$group]['#href'] = '';
+          }
+        }
+      }
+    }
+  }
+}

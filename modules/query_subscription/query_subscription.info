@@ -1,0 +1,11 @@
+name = Query Subscription
+description = Receive email notification if query results change
+core = 7.x
+package = Sesi
+files[] = query_subscription.entity.inc
+dependencies[] = mica_query
+dependencies[] = query_access_rights
+dependencies[] = query_interface
+dependencies[] = mailsystem
+dependencies[] = htmlmail
+dependencies[] = mailmime

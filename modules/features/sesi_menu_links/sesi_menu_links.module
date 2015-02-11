@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Sesi Menu Links feature.
+ */
+
+include_once 'sesi_menu_links.features.inc';
